@@ -9,12 +9,16 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.17.9",
+    "@faker-js/faker": "^7.6.0",
+    "bcrypt": "^5.1.0",
+    "crypto-js": "^4.1.1",
     "jquery": "^3.6.0",
-    "meteor-node-stubs": "^1.2.1"
+    "lodash": "^4.17.21",
+    "meteor-node-stubs": "^1.2.1",
+    "moment-timezone": "^0.5.41"
   },
   "meteor": {
-    "mainModule": {
-    },
+    "mainModule": {},
     "testModule": "tests/main.js"
   }
 }
