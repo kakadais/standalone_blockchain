@@ -63,4 +63,4 @@
 // console.log('Is blockchain valid after tampering? ' + myBlockchain.isChainValid());
 //
 // // Printing the chain
-// console.log(JSON.stringify(myBlockchain, null, 4));
+// // console.log(JSON.stringify(myBlockchain, null, 4));
