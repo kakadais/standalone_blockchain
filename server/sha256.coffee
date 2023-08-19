@@ -1,6 +1,10 @@
 SHA256 = require 'crypto-js/sha256'
 { faker } = require '@faker-js/faker'
 
+db = new Mongo.Collection 'bcDB'
+db.remove({})
+
+
 class Block
   constructor: (index, timestamp, data, previousHash = '') ->
     @index = index
@@ -17,7 +21,9 @@ class BlockchainSha256
     @chain = [@createGenesisBlock()]
 
   createGenesisBlock: ->
-    new Block 0, '01/01/2023', 'Genesis block', '0'
+    genesisBlock = new Block 0, new Date(), 'Genesis block', '0'
+    db.insert genesisBlock # Save the genesis block to MongoDB
+    return genesisBlock
 
   getLatestBlock: ->
     @chain[@chain.length - 1]
@@ -26,6 +32,7 @@ class BlockchainSha256
     newBlock.previousHash = @getLatestBlock().hash
     newBlock.hash = newBlock.calculateHash()
     @chain.push newBlock
+    db.insert newBlock # Save the block to MongoDB after setting previousHash
 
   isChainValid: ->
     for i in [1...@chain.length]
@@ -39,7 +46,7 @@ class BlockchainSha256
 
 # Testing the implementation
 myBlockchain = new BlockchainSha256()
-for i in [0...100000]
+for i in [1..10]
   myBlockchain.addBlock new Block i, new Date(), faker.lorem.sentence()
 
 console.log 'Is blockchain valid? ' + myBlockchain.isChainValid()
@@ -51,4 +58,4 @@ myBlockchain.chain[1].hash = myBlockchain.chain[1].calculateHash()
 console.log 'Is blockchain valid after tampering? ' + myBlockchain.isChainValid()
 
 # Printing the chain
-# console.log JSON.stringify(myBlockchain, null, 4)
+console.log JSON.stringify(myBlockchain, null, 4)
