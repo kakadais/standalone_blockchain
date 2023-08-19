@@ -1,9 +1,7 @@
 SHA256 = require 'crypto-js/sha256'
 { faker } = require '@faker-js/faker'
 
-db = new Mongo.Collection 'bcDB'
-db.remove({})
-
+@db = new Mongo.Collection 'bcDB'
 
 class Block
   constructor: (index, timestamp, data, previousHash = '') ->
@@ -18,44 +16,51 @@ class Block
 
 class BlockchainSha256
   constructor: ->
-    @chain = [@createGenesisBlock()]
+    @createGenesisBlock()
 
   createGenesisBlock: ->
-    genesisBlock = new Block 0, new Date(), 'Genesis block', '0'
-    db.insert genesisBlock # Save the genesis block to MongoDB
-    return genesisBlock
+    if db.find().count() is 0
+      genesisBlock = new Block 0, new Date(), 'Genesis block', '0'
+      db.insert genesisBlock # Save the genesis block to MongoDB
 
   getLatestBlock: ->
-    @chain[@chain.length - 1]
+    db.find({}, { sort: { index: -1 }, limit: 1 }).fetch()[0]
 
   addBlock: (newBlock) ->
     newBlock.previousHash = @getLatestBlock().hash
     newBlock.hash = newBlock.calculateHash()
-    @chain.push newBlock
     db.insert newBlock # Save the block to MongoDB after setting previousHash
 
   isChainValid: ->
-    for i in [1...@chain.length]
-      currentBlock = @chain[i]
-      previousBlock = @chain[i - 1]
+    chain = db.find({}, { sort: { index: 1 } }).fetch()
+    genesisBlock = chain[0]
+    genesisHash = SHA256(genesisBlock.index + genesisBlock.previousHash + genesisBlock.timestamp + JSON.stringify(genesisBlock.data)).toString()
+    return false if genesisBlock.hash != genesisHash
 
-      return false if currentBlock.hash != currentBlock.calculateHash()
+    for i in [1...(chain.length - 1)]
+      currentBlock = chain[i]
+      previousBlock = chain[i - 1]
+      currentHash = SHA256(currentBlock.index + currentBlock.previousHash + currentBlock.timestamp + JSON.stringify(currentBlock.data)).toString()
+
+      return false if currentBlock.hash != currentHash
       return false if currentBlock.previousHash != previousBlock.hash
 
     return true
 
 # Testing the implementation
+#db.remove({}) # to reset DB
 myBlockchain = new BlockchainSha256()
-for i in [1..10]
-  myBlockchain.addBlock new Block i, new Date(), faker.lorem.sentence()
+if db.find().count() <= 1
+  for i in [1..10]
+    myBlockchain.addBlock new Block i, new Date(), faker.lorem.sentence()
 
 console.log 'Is blockchain valid? ' + myBlockchain.isChainValid()
 
 # Tampering with the chain
-myBlockchain.chain[1].data = amount: 100
-myBlockchain.chain[1].hash = myBlockchain.chain[1].calculateHash()
+#block = db.findOne({}, {skip:0})
+#db.update block._id, $set: data: 'tampered'
 
 console.log 'Is blockchain valid after tampering? ' + myBlockchain.isChainValid()
 
 # Printing the chain
-console.log JSON.stringify(myBlockchain, null, 4)
+#console.log JSON.stringify(myBlockchain, null, 4)

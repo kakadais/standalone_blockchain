@@ -6,3 +6,5 @@ do ->
 #  hash = await bcrypt.hash JSON.stringify({a: 1}), saltRounds
 #  cl bcrypt.compareSync JSON.stringify({a: 1}), hash
 #  if db.find().count() is 0 then return console.error 'no data in db.'
+
+
