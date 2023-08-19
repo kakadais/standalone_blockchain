@@ -31,24 +31,31 @@ class BlockchainSha256
     newBlock.hash = newBlock.calculateHash()
     db.insert newBlock # Save the block to MongoDB after setting previousHash
 
-  isChainValid: ->
-    chain = db.find({}, { sort: { index: 1 } }).fetch()
-    genesisBlock = chain[0]
-    genesisHash = SHA256(genesisBlock.index + genesisBlock.previousHash + genesisBlock.timestamp + JSON.stringify(genesisBlock.data)).toString()
-    return false if genesisBlock.hash != genesisHash
+  isChainValid: (_count) ->
+    count = _count or db.find().count()
+    previousBlock = null
 
-    for i in [1...(chain.length - 1)]
-      currentBlock = chain[i]
-      previousBlock = chain[i - 1]
-      currentHash = SHA256(currentBlock.index + currentBlock.previousHash + currentBlock.timestamp + JSON.stringify(currentBlock.data)).toString()
+    for i in [0...count]
+      if i % 1000 is 0 then cl "validating count: #{i}"
+      currentBlock = db.findOne({ index: i })
 
-      return false if currentBlock.hash != currentHash
-      return false if currentBlock.previousHash != previousBlock.hash
+      # Check genesis block hash
+      if i == 0
+        genesisHash = SHA256(currentBlock.index + currentBlock.previousHash + currentBlock.timestamp + JSON.stringify(currentBlock.data)).toString()
+        return false if currentBlock.hash != genesisHash
+      else
+        currentHash = SHA256(currentBlock.index + currentBlock.previousHash + currentBlock.timestamp + JSON.stringify(currentBlock.data)).toString()
+        return false if currentBlock.hash != currentHash
+        return false if currentBlock.previousHash != previousBlock.hash
+
+      previousBlock = currentBlock
 
     return true
 
+
 # Testing the implementation
 #db.remove({}) # to reset DB
+
 myBlockchain = new BlockchainSha256()
 count = 100000
 if db.find().count() <= count
@@ -59,9 +66,9 @@ if db.find().count() <= count
 #console.log 'Is blockchain valid? ' + myBlockchain.isChainValid()
 
 # Tampering with the chain
-#block = db.findOne({}, {skip:0})
+#block = db.findOne({}, {skip:1})
 #db.update block._id, $set: data: 'tampered'
-#console.log 'Is blockchain valid after tampering? ' + myBlockchain.isChainValid()
+console.log 'Is blockchain valid after tampering? ' + myBlockchain.isChainValid()
 
 # Printing the chain
 #console.log JSON.stringify(myBlockchain, null, 4)
