@@ -50,17 +50,18 @@ class BlockchainSha256
 # Testing the implementation
 #db.remove({}) # to reset DB
 myBlockchain = new BlockchainSha256()
-if db.find().count() <= 1
-  for i in [1..10]
+count = 100000
+if db.find().count() <= count
+  [db.find().count()...count].forEach (i) ->
+    if i % 1000 is 0 then cl i
     myBlockchain.addBlock new Block i, new Date(), faker.lorem.sentence()
 
-console.log 'Is blockchain valid? ' + myBlockchain.isChainValid()
+#console.log 'Is blockchain valid? ' + myBlockchain.isChainValid()
 
 # Tampering with the chain
 #block = db.findOne({}, {skip:0})
 #db.update block._id, $set: data: 'tampered'
-
-console.log 'Is blockchain valid after tampering? ' + myBlockchain.isChainValid()
+#console.log 'Is blockchain valid after tampering? ' + myBlockchain.isChainValid()
 
 # Printing the chain
 #console.log JSON.stringify(myBlockchain, null, 4)
