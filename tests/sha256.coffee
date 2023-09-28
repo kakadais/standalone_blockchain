@@ -1,8 +1,9 @@
 SHA256 = require 'crypto-js/sha256'
 { faker } = require '@faker-js/faker'
 
-@db = new Mongo.Collection 'bcDB'
-
+@db = new Mongo.Collection 'bcDB2'
+db._ensureIndex({index: 1})
+#db.remove({})
 class Block
   constructor: (index, timestamp, data, previousHash = '') ->
     @index = index
@@ -24,7 +25,8 @@ class BlockchainSha256
       db.insert genesisBlock # Save the genesis block to MongoDB
 
   getLatestBlock: ->
-    db.find({}, { sort: { index: -1 }, limit: 1 }).fetch()[0]
+#    db.find({}, { sort: { index: -1 }, limit: 1 }).fetch()[0]
+    db.findOne({}, { sort: { index: -1 }})
 
   addBlock: (newBlock) ->
     newBlock.previousHash = @getLatestBlock().hash
@@ -57,7 +59,7 @@ class BlockchainSha256
 #db.remove({}) # to reset DB
 
 myBlockchain = new BlockchainSha256()
-count = 100000
+count = 2
 if db.find().count() <= count
   [db.find().count()...count].forEach (i) ->
     if i % 1000 is 0 then cl i
@@ -68,7 +70,30 @@ if db.find().count() <= count
 # Tampering with the chain
 #block = db.findOne({}, {skip:1})
 #db.update block._id, $set: data: 'tampered'
-console.log 'Is blockchain valid after tampering? ' + myBlockchain.isChainValid()
+#console.log 'Is blockchain valid after tampering? ' + myBlockchain.isChainValid()
 
-# Printing the chain
-#console.log JSON.stringify(myBlockchain, null, 4)
+## Creating a new MongoDB collection for the results
+#bcDBResult = new Mongo.Collection 'bcDBResult'
+##bcDBResult.remove({})
+## Total number of blocks to validate
+#totalBlocks = db.find().count()
+#
+## Variable to track cumulative time
+#cumulativeTime = 0
+#
+## Loop to validate blocks in chunks of 1000
+#for count in [1000...totalBlocks + 1] by 1000
+#  startTime = Date.now()
+#  isValid = myBlockchain.isChainValid(count)
+#  endTime = Date.now()
+#
+#  timeTaken = endTime - startTime # Calculate time taken in milliseconds
+#  cumulativeTime += timeTaken # Add to cumulative time
+#
+#  # Save the result to the bcDBResult collection
+#  result = { count: count, loopTime: timeTaken, cumulativeTime: cumulativeTime }
+#  bcDBResult.insert result
+#
+#  console.log "Is blockchain valid after tampering for count #{count}? " + isValid
+#  console.log "Loop time: #{timeTaken}ms, Cumulative time: #{cumulativeTime}ms"
+
