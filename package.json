@@ -10,6 +10,7 @@
   "dependencies": {
     "@babel/runtime": "^7.17.9",
     "@faker-js/faker": "^7.6.0",
+    "@tensorflow/tfjs-node": "^4.11.0",
     "bcrypt": "^5.1.0",
     "crypto-js": "^4.1.1",
     "jquery": "^3.6.0",
